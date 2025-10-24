@@ -15,13 +15,24 @@ import { writeToFile } from "./utils/writeToFile.js";
 import * as fs from "fs";
 
 const URLS = [
-  "https://akb-st.com.ua/ua/g113712469-agm",
   "https://akb-st.com.ua/ua/g112248703-eurocraft-monbatbolgariya",
+  "https://akb-st.com.ua/ua/g112248703-eurocraft-monbatbolgariya/page_2",
+  "https://akb-st.com.ua/ua/g112248703-eurocraft-monbatbolgariya/page_3",
+  "https://akb-st.com.ua/ua/g112248703-eurocraft-monbatbolgariya/page_4",
   "https://akb-st.com.ua/ua/g89470512-kainar-kazahstan",
+  "https://akb-st.com.ua/ua/g89470512-kainar-kazahstan/page_2",
+  "https://akb-st.com.ua/ua/g89470512-kainar-kazahstan/page_3",
 ];
 
-const TITLE =
-  "h1.product__title-left.product__title-collapsed.ng-star-inserted";
+const selectors = {
+  landing: {
+    title: "h1.product__title-left.product__title-collapsed.ng-star-inserted",
+  },
+  listing: {
+    gallery: "ul.cs-product-gallery__list",
+    galleryItem: "li.cs-product-gallery__item",
+  },
+};
 
 async function main() {
   const { browser, page } = await init("https://akb-st.com.ua/ua");
@@ -45,6 +56,10 @@ async function main() {
       }
     });
 
+// const paragraph = "The quick brown fox jumps over the lazy dog. It barked.";
+// const regex = /[A-Z]/g;
+// const found = paragraph.match(regex);
+
     await page.setUserAgent(randomUserAgent);
     await page.goto(url, {
       waitUntil: "domcontentloaded",
@@ -52,11 +67,11 @@ async function main() {
 
     const products = [];
     products.push({
-      name: await getName(page),
-      price: await getPrice(page),
-      description: await getDescription(page),
-      characteristics: await getCharacteristics(page),
-      images: await getImages(page, product, imagesUrls, brand),
+      name: await getName(),
+      price: await getPrice(),
+      description: await getDescription(),
+      characteristics: await getCharacteristics(),
+      images: await getImages(),
     });
   }
 
@@ -67,7 +82,7 @@ async function main() {
       .catch((e) => console.log(`title is not found\n`));
   }
 
-  async function getDescription(page) {
+  async function getDescription() {
     let text = "";
     try {
       const descriptionHandle = await page.$(
@@ -81,7 +96,7 @@ async function main() {
     return { Опис: text };
   }
 
-  async function getCharacteristics(page) {
+  async function getCharacteristics() {
     const characteristics = {};
     try {
       const characteristicsItems = await page.$$(
@@ -109,9 +124,6 @@ async function main() {
     }
     return characteristics;
   }
-
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
 
   async function getImages(page, product, imagesUrls, brand) {
     let { folderName, fileName } = getImagePath(product);
