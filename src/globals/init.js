@@ -2,7 +2,7 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 puppeteer.use(StealthPlugin());
 
-import { randomUserAgent } from "../globals/randomUserAgent.js";
+import { randomUserAgent } from "./randomUserAgent.js";
 
 export const START_URL = "https://rozetka.com.ua/ua/";
 
