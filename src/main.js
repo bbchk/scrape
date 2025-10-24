@@ -25,7 +25,7 @@ export async function scrape(brand) {
 
     await writeToFile(
       foundEntries + "\n\n" + notFoundEntries,
-      `notFound/${brand}.txt`
+      `notFound/${brand}.txt`,
     );
     await writeToFile(JSON.stringify(productsInfo, null, 2), infoFilePath);
   }
@@ -45,34 +45,7 @@ export async function scrape(brand) {
   return productsData;
 }
 
-const toScrape = [
-  "aleana",
-  "garden-club",
-  "greenharvest",
-  "household_malceva",
-  "kiloma_service",
-  "kisson",
-  "level_xoztovaru",
-  "olkar",
-  "partner(aleana)",
-  "prof_nasinna",
-  "recordagro-b",
-  "spektr-agro",
-  "ukravit",
-  "vinxozgroup",
-  "bazar-luyba",
-  "animall",
-  "royal-canin",
-  "collar",
-  "pan-kitpan-pes",
-  "wiskas",
-  "josera",
-  "product",
-  "krug_semenko",
-  "pruroda",
-  "myav-4paws-openmeal",
-  "purina-friskies",
-];
+const toScrape = ["crona", "eurokraft", "istar", "kainar", "maximus"];
 
 for (const brand of toScrape) {
   await scrape(brand);

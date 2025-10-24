@@ -1,4 +1,4 @@
-import { getCategory } from "./scrapeUtils/getCategory.js";
+// import { getCategory } from "./scrapeUtils/getCategory.js";
 import { getCharacteristics } from "./scrapeUtils/getCharacteristics.js";
 import { getDescription } from "./scrapeUtils/getDescription.js";
 import { getImages } from "./scrapeUtils/getImages.js";
@@ -31,7 +31,7 @@ export async function scrapeSearch(page, productsInfo, brand) {
     product.price = await getPrice(page);
     product.description = await getDescription(page);
     product.characteristics = await getCharacteristics(page);
-    product.category = await getCategory(page, product);
+    // product.category = await getCategory(page, product);
     product.images = await getImages(page, product, imagesUrls, brand);
 
     console.log(product, `\n${terminator}`);

@@ -11,8 +11,8 @@ export async function init(startUrl) {
     headless: true,
     defaultViewport: null,
     userDataDir: "./tmp",
-    executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
-    userDataDir: "C:/Users/bohda/AppData/Local/Google/Chrome/User Data/Default",
+    executablePath: "google-chrome-stable",
+    userDataDir: "/home/bchk/.config/google-chrome/Default",
   });
 
   const page = await browser.newPage();
