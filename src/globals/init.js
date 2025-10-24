@@ -16,7 +16,8 @@ export async function init(startUrl) {
   const randomViewport = getRandomViewport();
   
   const browser = await puppeteer.launch({
-    headless: "new", // Use new headless mode
+    headless: false,
+    // headless: "new",
     defaultViewport: randomViewport,
     executablePath: "google-chrome-stable",
     args: [
