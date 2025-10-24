@@ -1,11 +1,10 @@
 // import { getCategory } from "./scrapeUtils/getCategory.js";
-import { getCharacteristics } from "./scrapeUtils/getCharacteristics.js";
-import { getDescription } from "./scrapeUtils/getDescription.js";
-import { getImages } from "./scrapeUtils/getImages.js";
-import { getPrice } from "./scrapeUtils/getPrice.js";
-import { getTitle } from "./scrapeUtils/getTitle.js";
-import { randomUserAgent } from "../globals/randomUserAgent.js";
-import { flash, red, terminator } from "../globals/variables.js";
+import { getCharacteristics } from "./scrapers/scrapeUtils/getCharacteristics.js";
+import { getDescription } from "./scrapers/scrapeUtils/getDescription.js";
+import { getImages } from "./scrapers/scrapeUtils/getImages.js";
+import { getPrice } from "./scrapers/scrapeUtils/getPrice.js";
+import { getTitle } from "./scrapers/scrapeUtils/getTitle.js";
+import { randomUserAgent } from "./utils/randomUserAgent.js";
 
 export async function scrapeSearch(page, productsInfo, brand) {
   const products = [];
@@ -34,7 +33,6 @@ export async function scrapeSearch(page, productsInfo, brand) {
     // product.category = await getCategory(page, product);
     product.images = await getImages(page, product, imagesUrls, brand);
 
-    console.log(product, `\n${terminator}`);
     products.push(product);
   }
 

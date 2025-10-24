@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { flash, red, terminator } from "../../globals/variables.js";
+import { flash, red, terminator } from "../utils/variables.js";
 puppeteer.use(StealthPlugin());
 
 export async function getCharacteristics(page) {

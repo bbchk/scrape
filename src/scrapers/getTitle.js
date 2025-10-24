@@ -1,4 +1,4 @@
-import { flash, red } from "../../globals/variables.js";
+import { flash, red } from "../utils/variables.js";
 
 export async function getTitle(page) {
   let title = "";

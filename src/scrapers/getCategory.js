@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { readJson } from "../../io/readFile.js";
+import { readJson } from "../utils/readFile.js";
 import { isCancel } from "axios";
 
 puppeteer.use(StealthPlugin());

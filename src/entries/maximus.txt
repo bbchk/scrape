@@ -1,9 +1,0 @@
-АКБ   50Ah MAXIMUS Premium  (-/+)  EN450   (12,4кг)  206x175x190
-АКБ   50Ah MAXIMUS Premium  (+/-)  EN450   (12,4кг)  206x175x190
-АКБ   60Ah   MAXIMUS Premium (-/+)  EN620 (16,2кг)  242x175x190
-АКБ   60Ah   MAXIMUS Premium (+/-)  EN620 (16,2кг)  242x175x190
-АКБ   65Ah   MAXIMUS Premium (-/+)  EN640   242x175x190
-АКБ   65Ah   MAXIMUS Premium (+/-)  EN640   242x175x190
-АКБ   77Ah  MAXIMUS Premium (-/+) EN800 (18,6кг)  278x175x190
-АКБ   77Ah  MAXIMUS Premium (+/-) EN800 (18,6кг)  278x175x190
-АКБ  100Ah  MAXIMUS Premium (-/+)  EN1000 (24,5кг) 353x175x190
