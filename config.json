@@ -1,0 +1,59 @@
+{
+  "scraping": {
+    "delays": {
+      "minRequestDelay": 2000,
+      "maxRequestDelay": 8000,
+      "minBrandDelay": 5000,
+      "maxBrandDelay": 15000,
+      "retryBaseDelay": 1000,
+      "retryMaxDelay": 30000
+    },
+    "browser": {
+      "headless": "new",
+      "defaultTimeout": 30000,
+      "maxRetries": 3,
+      "userDataDir": "./browser-data",
+      "enableImages": true,
+      "enableJavaScript": true
+    },
+    "session": {
+      "maxRequestsPerSession": 50,
+      "rotateSessions": true,
+      "clearDataBetweenSessions": true
+    },
+    "detection": {
+      "useStealthMode": true,
+      "blockAds": true,
+      "solveCaptcha": true,
+      "randomizeFingerprints": true,
+      "simulateHumanBehavior": true
+    },
+    "logging": {
+      "enableDebugScreenshots": true,
+      "logLevel": "info",
+      "saveFailedRequests": true
+    }
+  },
+  "targets": {
+    "rozetka": {
+      "baseUrl": "https://rozetka.com.ua/ua/",
+      "searchUrl": "https://rozetka.com.ua/ua/search?text=",
+      "selectors": {
+        "notFound": "div.search-nothing__buttons-wrapper",
+        "searchResult": "a.goods-tile__heading",
+        "productTitle": "h1.product__title-left.product__title-collapsed.ng-star-inserted",
+        "productPrice": ".product-price__big",
+        "productDescription": ".product-about__description-content",
+        "productImages": "img[data-src*='/goods/images/big']"
+      },
+      "blockedIndicators": [
+        "blocked",
+        "captcha",
+        "verification",
+        "cloudflare",
+        "access denied",
+        "suspicious activity"
+      ]
+    }
+  }
+}
