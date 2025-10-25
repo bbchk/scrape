@@ -87,3 +87,70 @@ async function getImages(elem) {
     // You might need a more robust URL parsing for extension
     // Ensure you use the crypto.webcrypto if running in a browser-like environment
     const extension = imageUrl.split(".").pop().split(/[?#]/)[0];
+    const finalFileName = `${global._scrape.name.replace("/", "_")}.${extension}`;
+    const folderName = "images";
+
+    // Use the new Node.js-based download function
+    await downloadAndSaveImage(imageUrl, folderName, finalFileName);
+
+    imagesPaths.push(`${folderName}/${finalFileName}`);
+  } catch (e) {
+    console.error(`Error scraping or saving image: ${e.message}`);
+  }
+
+  // NOTE: If you stick with the direct download, you don't need to goBack()
+  // If you revert to the original Puppeteer method, keep the goBack()
+
+  return imagesPaths;
+}
+async function saveImageFile(response, folderName, fileName) {
+  // 1. Get the buffer from the Puppeteer Response object
+  const buffer = await response.buffer();
+
+  const filePath = path.resolve(folderName, fileName);
+
+  if (!fs.existsSync(path.dirname(filePath))) {
+    // Use the imported mkdir from 'fs/promises' if available
+    await mkdir(path.dirname(filePath), { recursive: true });
+  }
+  // 2. Write the buffer (binary data) to the file
+  fs.writeFileSync(filePath, buffer, "binary");
+}
+
+async function downloadAndSaveImage(url, folderName, fileName) {
+  const filePath = path.resolve(folderName, fileName);
+
+  // 1. Ensure the directory exists using async promises
+  await fsPromises.mkdir(path.dirname(filePath), { recursive: true });
+
+  // 2. Fetch the image data
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.statusText}`);
+  }
+
+  // 3. Get the buffer
+  const buffer = await response.buffer();
+
+  // 4. Write the buffer to the file using async promises
+  await fsPromises.writeFile(filePath, buffer);
+
+  console.log(`Successfully downloaded and saved: ${filePath}`);
+}
+
+// async function getDescription() {
+//   let text = "";
+//   try {
+//     const descriptionHandle = await page.$(
+//       "div.product-about__description-content.text",
+//     );
+//     text = await page.evaluate((el) => el.innerHTML, descriptionHandle);
+//   } catch (e) {
+//     console.log(`description is not found\n$`);
+//   }
+//
+//   return { Опис: text };
+// }
+
+export default { getName, getCharacteristics, getImages };
