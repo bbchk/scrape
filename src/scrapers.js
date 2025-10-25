@@ -1,3 +1,6 @@
+import path from "path";
+import CyrillicToTranslit from "cyrillic-to-translit-js";
+import fs from "fs";
 
 async function getName(element, selector) {
   const name = await element.$(selector);
@@ -7,8 +10,96 @@ async function getName(element, selector) {
     .catch((e) => console.log(`name is not found\n`));
 }
 
-export default { getName, collectLandingLinks };
+async function getCharacteristics(elem) {
+  const characteristics = {};
+  try {
+    const tableRows = await elem.$$(
+      "div.cs-tab-list table.b-product-info tbody tr",
+    );
 
+    for (const row of tableRows) {
+      // Find the header cells (<th>) which separate sections (e.g., "Основні").
+      // We skip these rows as they don't contain key/value pairs we want to scrape.
+      const headerCell = await row.$("th.b-product-info__header");
+      if (headerCell) {
+        continue;
+      }
+
+      // 2. Select the key (label) cell, which is the first <td> in the row.
+      const labelHandle = await row.$("td.b-product-info__cell:nth-child(1)");
+
+      // 3. Select the value cell, which is the second <td> in the row.
+      const valueHandle = await row.$("td.b-product-info__cell:nth-child(2)");
+
+      // Ensure both key and value elements are found
+      if (labelHandle && valueHandle) {
+        // Extract text content, stripping leading/trailing whitespace
+        const labelText = await global._scrape.page.evaluate(
+          (el) => el.textContent.trim(),
+          labelHandle,
+        );
+        const valueContent = await global._scrape.page.evaluate(
+          (el) => el.textContent.trim(),
+          valueHandle,
+        );
+
+        if (labelText) {
+          characteristics[labelText] = valueContent;
+        }
+      }
+    }
+  } catch (e) {
+    console.error(`Error scraping characteristics: ${e.message}\n`, e.stack);
+  }
+  return characteristics;
+}
+
+async function getImages(elem, product) {
+  const imagesPaths = [];
+
+  const mainImageSelector =
+    ".cs-product-image__main-img img.cs-product-image__img";
+
+  try {
+    await elem.waitForSelector(mainImageSelector, { timeout: 10000 });
+    const imageUrl = await global._scrape.page.evaluate((img) => img.src, mainImageSelector);
+
+    if (!imageUrl) {
+      console.log("Image URL not found on the page.");
+      return imagesPaths;
+    }
+
+    let { folderName, fileName } = getImagePath(product);
+
+    // --- Start Download Logic for the single URL ---
+    const extension = imageUrl.split(".").pop();
+    const finalFileName = `${fileName}_0.${extension}`; // Use index 0 for the main image
+
+    // Go to the image URL to trigger the response
+    await global._scrape.page.goto(imageUrl, {
+      waitUntil: "domcontentloaded", // Changed to domcontentloaded for faster load
+    });
+
+    // Wait for the response to the image request
+    const response = await global._scrape.page.waitForResponse(
+      (res) => res.url() === imageUrl,
+      { timeout: 5000 },
+    );
+
+    await saveImageFile(response, folderName, finalFileName);
+
+    imagesPaths.push(
+      `${folderName}/${finalFileName}`,
+    );
+  } catch (e) {
+    console.error(`Error scraping or saving image: ${e.message}`);
+  }
+
+  // Remember to navigate back to the product page after downloading!
+  await global._scrape.page.goBack({ waitUntil: "domcontentloaded" });
+
+  return imagesPaths;
+}
 // async function getDescription() {
 //   let text = "";
 //   try {
@@ -22,97 +113,5 @@ export default { getName, collectLandingLinks };
 //
 //   return { Опис: text };
 // }
-//
-// async function getCharacteristics() {
-//   const characteristics = {};
-//   try {
-//     const characteristicsItems = await page.$$(
-//       "dl.characteristics-full__list div.characteristics-full__item.ng-star-inserted",
-//     );
-//
-//     for (const item of characteristicsItems) {
-//       const labelHandle = await item.$("dt.characteristics-full__label span");
-//       const lableText = await page.evaluate(
-//         (el) => el.textContent,
-//         labelHandle,
-//       );
-//       const valueHandle = await item.$(
-//         "dd.characteristics-full__value ul.characteristics-full__sub-list li.ng-star-inserted",
-//       );
-//       const valueContent = await page.evaluate(
-//         (el) => el.textContent,
-//         valueHandle,
-//       );
-//       characteristics[lableText] = valueContent;
-//     }
-//   } catch (e) {
-//     console.log(`${e.message}\n`);
-//     console.log(e.stack);
-//   }
-//   return characteristics;
-// }
 
-// async function getImages(page, product, imagesUrls, brand) {
-//   let { folderName, fileName } = getImagePath(product);
-//
-//   const imagesPaths = [];
-//   try {
-//     const imagesUrlsArray = Array.from(imagesUrls);
-//
-//     for (let index = 0; index < imagesUrlsArray.length; index++) {
-//       const imageUrl = imagesUrlsArray[index];
-//
-//       const extension = imageUrl.split(".").pop();
-//       fileName = `${fileName}_${index}.${extension}`;
-//
-//       const responsePromise = page.waitForResponse(
-//         (response) => response.url() === imageUrl,
-//         { timeout: 5000 },
-//       );
-//
-//       await page.goto(imageUrl, {
-//         waitUntil: "networkidle2",
-//       });
-//
-//       const response = await responsePromise;
-//
-//       await saveImageFile(response, folderName, fileName);
-//       imagesPaths.push(
-//         `https://storage.googleapis.com/live_world/${folderName}/${fileName}`,
-//       );
-//     }
-//   } catch (e) {
-//     console.log(e.stack);
-//   }
-//   return imagesPaths;
-// }
-//
-// function getImagePath(product) {
-//   let folderName = `images/${product.brand}_images`
-//     .toLowerCase()
-//     .split(" ")
-//     .join("_");
-//
-//   const cyrillicToTranslit = new CyrillicToTranslit();
-//   let fileName = cyrillicToTranslit
-//     .transform(product.entry)
-//     .toLowerCase()
-//     .split(" ")
-//     .join("_")
-//     .replaceAll('"', "")
-//     .replaceAll("*", "_")
-//     .replaceAll("'", "");
-//
-//   return { folderName, fileName };
-// }
-//
-// async function saveImageFile(response, folderName, fileName) {
-//   const buffer = await response.buffer();
-//   const filePath = path.resolve(folderName, fileName);
-//   // const filePath = path.resolve(__dirname, "..", folderName, fileName);
-//
-//   if (!fs.existsSync(path.dirname(filePath))) {
-//     await mkdir(path.dirname(filePath), { recursive: true });
-//   }
-//   fs.writeFileSync(filePath, buffer, "binary");
-// }
+export default { getName, getCharacteristics, getImages };

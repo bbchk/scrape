@@ -40,6 +40,7 @@ async function main() {
   await browser.close();
 }
 
+
 async function collectLandingLinks(elem, selectors, linkSelector) {
   let productCards = [];
   const links = [];
