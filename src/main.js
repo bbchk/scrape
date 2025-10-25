@@ -44,26 +44,27 @@ async function main() {
   await browser.close();
 
   async function loop(url) {
-    const imagesUrls = new Set();
 
+    const imagesUrls = new Set();
     page.on("response", (res) => {
-      if (
-        (res.request().resourceType() == "image" &&
-          res.url().includes("akum")) ||
-        res.url().includes("bat")
-      ) {
+      const resType = res.request().resourceType();
+      const resUrl = res.url();
+
+      if (resType == "image" && resUrl.match(/akum|bat/gi)) {
         imagesUrls.add(res.url());
       }
     });
-
-// const paragraph = "The quick brown fox jumps over the lazy dog. It barked.";
-// const regex = /[A-Z]/g;
-// const found = paragraph.match(regex);
 
     await page.setUserAgent(randomUserAgent);
     await page.goto(url, {
       waitUntil: "domcontentloaded",
     });
+
+
+
+    const productCards = await page.$$(selectors.listing.gallery);
+    for(p in productCards){
+      await page.click(p);
 
     const products = [];
     products.push({
@@ -73,6 +74,10 @@ async function main() {
       characteristics: await getCharacteristics(),
       images: await getImages(),
     });
+
+      // TODO: go back in history;
+    }
+
   }
 
   async function getName() {
