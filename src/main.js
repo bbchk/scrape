@@ -1,6 +1,10 @@
 import { init } from "./init.js";
 
+import { landingLinks } from "./cfg.js";
+
 import CyrillicToTranslit from "cyrillic-to-translit-js";
+import { randomUserAgent } from "./utils/randomUserAgent.js";
+import scrapers from "./scrapers.js";
 
 import { mkdir } from "fs/promises";
 
@@ -26,25 +30,41 @@ const URLS = [
 
 const selectors = {
   landing: {
-    title: "h1.product__title-left.product__title-collapsed.ng-star-inserted",
+    name: "div.cs-page__content-product-inner div.cs-product__info h1.cs-title.cs-title_type_product.cs-online-edit span[data-qaid='product_name']",
   },
   listing: {
+    content: "div.cs-page__content",
+    row: "div.cs-page__row:nth-of-type(2)",
     gallery: "ul.cs-product-gallery__list",
-    galleryItem: "li.cs-product-gallery__item",
+
+    galleryItem: [
+      "li.cs-online-edit.cs-product-gallery__item.js-productad",
+      "li.ProductList__item--d3K92.js-rtb-partner.js-productad",
+    ],
+
+    galleryItemLink: "a.cs-product-gallery__image-link",
   },
 };
 
 async function main() {
   const { browser, page } = await init("https://akb-st.com.ua/ua");
+  global._scrape = {
+    browser,
+    page,
+  };
 
-  for (u in URLS) {
-    loop(u);
+  for (const u of URLS) {
+    const links = await loop(u);
+    await writeToFile(
+      JSON.stringify(links),
+      `links_from_${path.basename(u)}.json`,
+    );
   }
 
   await browser.close();
 
   async function loop(url) {
-
+    // console.log(url);
     const imagesUrls = new Set();
     page.on("response", (res) => {
       const resType = res.request().resourceType();
@@ -60,140 +80,50 @@ async function main() {
       waitUntil: "domcontentloaded",
     });
 
-
-
-    const productCards = await page.$$(selectors.listing.gallery);
-    for(p in productCards){
-      await page.click(p);
-
     const products = [];
-    products.push({
-      name: await getName(),
-      price: await getPrice(),
-      description: await getDescription(),
-      characteristics: await getCharacteristics(),
-      images: await getImages(),
-    });
 
-      // TODO: go back in history;
-    }
+    // const productCards = await page.$$(
+    //   `${selectors.listing.content} ${selectors.listing.row} ${selectors.listing.gallery} ${selectors.listing.galleryItem}`,
+    // );
 
-  }
+    const { cards, links } = await scrapers.collectLandingLinks(
+      page,
+      selectors.listing.galleryItem,
+      selectors.listing.galleryItemLink,
+    );
 
-  async function getName() {
-    const name = await page.$(TITLE);
-    return await page
-      .evaluate((el) => el.textContent, name)
-      .catch((e) => console.log(`title is not found\n`));
-  }
+    console.log(links);
 
-  async function getDescription() {
-    let text = "";
-    try {
-      const descriptionHandle = await page.$(
-        "div.product-about__description-content.text",
-      );
-      text = await page.evaluate((el) => el.innerHTML, descriptionHandle);
-    } catch (e) {
-      console.log(`description is not found\n$`);
-    }
+    // await page.waitForSelector(selectors.listing.galleryItem, {
+    //   timeout: 100000,
+    // });
+    // const productCards = await page.$$(
+    //   selectors.listing.galleryItem, // Try just "li.cs-product-gallery__item"
+    // );
+    // console.log(productCards);
+    // for (const p of productCards) {
+    //   const productLink = await p.$(selectors.listing.galleryItemLink);
+    //   const productLandingUrl = await page.evaluate(
+    //     (el) => el.href,
+    //     productLink,
+    //   );
+    //
+    //   await page.goto(productLandingUrl, { waitUntil: "domcontentloaded" });
+    //
+    //   products.push({
+    //     name: await scrapers.getName(page, selectors.landing.name),
+    //     // description: await getDescription(),
+    //     // characteristics: await getCharacteristics(),
+    //     // images: await getImages(),
+    //   });
+    //
+    //   await page.goBack({ waitUntil: "domcontentloaded" });
+    // }
 
-    return { Опис: text };
-  }
-
-  async function getCharacteristics() {
-    const characteristics = {};
-    try {
-      const characteristicsItems = await page.$$(
-        "dl.characteristics-full__list div.characteristics-full__item.ng-star-inserted",
-      );
-
-      for (const item of characteristicsItems) {
-        const labelHandle = await item.$("dt.characteristics-full__label span");
-        const lableText = await page.evaluate(
-          (el) => el.textContent,
-          labelHandle,
-        );
-        const valueHandle = await item.$(
-          "dd.characteristics-full__value ul.characteristics-full__sub-list li.ng-star-inserted",
-        );
-        const valueContent = await page.evaluate(
-          (el) => el.textContent,
-          valueHandle,
-        );
-        characteristics[lableText] = valueContent;
-      }
-    } catch (e) {
-      console.log(`${e.message}\n`);
-      console.log(e.stack);
-    }
-    return characteristics;
-  }
-
-  async function getImages(page, product, imagesUrls, brand) {
-    let { folderName, fileName } = getImagePath(product);
-
-    const imagesPaths = [];
-    try {
-      const imagesUrlsArray = Array.from(imagesUrls);
-
-      for (let index = 0; index < imagesUrlsArray.length; index++) {
-        const imageUrl = imagesUrlsArray[index];
-
-        const extension = imageUrl.split(".").pop();
-        fileName = `${fileName}_${index}.${extension}`;
-
-        const responsePromise = page.waitForResponse(
-          (response) => response.url() === imageUrl,
-          { timeout: 5000 },
-        );
-
-        await page.goto(imageUrl, {
-          waitUntil: "networkidle2",
-        });
-
-        const response = await responsePromise;
-
-        await saveImageFile(response, folderName, fileName);
-        imagesPaths.push(
-          `https://storage.googleapis.com/live_world/${folderName}/${fileName}`,
-        );
-      }
-    } catch (e) {
-      console.log(e.stack);
-    }
-    return imagesPaths;
-  }
-
-  function getImagePath(product) {
-    let folderName = `images/${product.brand}_images`
-      .toLowerCase()
-      .split(" ")
-      .join("_");
-
-    const cyrillicToTranslit = new CyrillicToTranslit();
-    let fileName = cyrillicToTranslit
-      .transform(product.entry)
-      .toLowerCase()
-      .split(" ")
-      .join("_")
-      .replaceAll('"', "")
-      .replaceAll("*", "_")
-      .replaceAll("'", "");
-
-    return { folderName, fileName };
-  }
-
-  async function saveImageFile(response, folderName, fileName) {
-    const buffer = await response.buffer();
-    const filePath = path.resolve(folderName, fileName);
-    // const filePath = path.resolve(__dirname, "..", folderName, fileName);
-
-    if (!fs.existsSync(path.dirname(filePath))) {
-      await mkdir(path.dirname(filePath), { recursive: true });
-    }
-    fs.writeFileSync(filePath, buffer, "binary");
+    return links;
   }
 }
 
 main();
+
+
