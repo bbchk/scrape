@@ -1,5 +1,6 @@
 import path from "path";
 import CyrillicToTranslit from "cyrillic-to-translit-js";
+import * as crypto from "crypto"; // <-- ADD THIS IMPORT
 import fs from "fs";
 
 async function getName(element, selector) {
@@ -54,7 +55,7 @@ async function getCharacteristics(elem) {
   return characteristics;
 }
 
-async function getImages(elem, product) {
+async function getImages(elem) {
   const imagesPaths = [];
 
   const mainImageSelector =
@@ -62,18 +63,23 @@ async function getImages(elem, product) {
 
   try {
     await elem.waitForSelector(mainImageSelector, { timeout: 10000 });
-    const imageUrl = await global._scrape.page.evaluate((img) => img.src, mainImageSelector);
+
+    const imageElem = await elem.$(mainImageSelector);
+    console.log(imageElem);
+
+    const imageUrl = await global._scrape.page.evaluate(
+      (img) => img.src,
+      imageElem,
+    );
 
     if (!imageUrl) {
       console.log("Image URL not found on the page.");
       return imagesPaths;
     }
 
-    let { folderName, fileName } = getImagePath(product);
-
-    // --- Start Download Logic for the single URL ---
-    const extension = imageUrl.split(".").pop();
-    const finalFileName = `${fileName}_0.${extension}`; // Use index 0 for the main image
+    const extension = imageUrl.split(".").pop().split(/[?#]/)[0]; // robust extension extraction
+    const randomId = crypto.randomBytes(8).toString("hex"); // Creates a unique 16-character hex string
+    const finalFileName = `${randomId}.${extension}`; // e.g., "a3b4c5d6e7f8g9h0.jpg"
 
     // Go to the image URL to trigger the response
     await global._scrape.page.goto(imageUrl, {
@@ -88,9 +94,7 @@ async function getImages(elem, product) {
 
     await saveImageFile(response, folderName, finalFileName);
 
-    imagesPaths.push(
-      `${folderName}/${finalFileName}`,
-    );
+    imagesPaths.push(`${folderName}/${finalFileName}`);
   } catch (e) {
     console.error(`Error scraping or saving image: ${e.message}`);
   }
@@ -99,6 +103,15 @@ async function getImages(elem, product) {
   await global._scrape.page.goBack({ waitUntil: "domcontentloaded" });
 
   return imagesPaths;
+}
+
+async function saveImageFile(buffer, folderName, fileName) {
+    const filePath = path.resolve(folderName, fileName);
+
+    if (!fs.existsSync(path.dirname(filePath))) {
+        await mkdir(path.dirname(filePath), { recursive: true });
+    }
+    fs.writeFileSync(filePath, buffer, "binary"); 
 }
 // async function getDescription() {
 //   let text = "";

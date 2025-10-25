@@ -42,14 +42,14 @@ async function main() {
 
   async function loop(url) {
 
-    const imagesUrls = new Set();
-    page.on("response", (res) => {
-      const resType = res.request().resourceType();
-      const resUrl = res.url();
-      if (resType == "image" && resUrl.match(/akum|bat/i)) {
-        imagesUrls.add(res.url());
-      }
-    });
+    // const imagesUrls = new Set();
+    // page.on("response", (res) => {
+    //   const resType = res.request().resourceType();
+    //   const resUrl = res.url();
+    //   if (resType == "image" && resUrl.match(/akum|bat/i)) {
+    //     imagesUrls.add(res.url());
+    //   }
+    // });
 
     await page.setUserAgent(randomUserAgent);
     await page.goto(url, {
@@ -60,7 +60,7 @@ async function main() {
       name: await scrapers.getName(page, selectors.landing.name),
       // description: await scrapers.getDescription(page,),
       characteristics: await scrapers.getCharacteristics(page),
-      images: await scrapers.getImages(),
+      images: await scrapers.getImages(page),
     };
 
     console.log(product);

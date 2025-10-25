@@ -275,13 +275,5 @@ function getImagePath(product) {
     return { folderName, fileName };
 }
 
-async function saveImageFile(buffer, folderName, fileName) {
-    const filePath = path.resolve(folderName, fileName);
-
-    if (!fs.existsSync(path.dirname(filePath))) {
-        await mkdir(path.dirname(filePath), { recursive: true });
-    }
-    fs.writeFileSync(filePath, buffer, "binary"); 
-}
 
 main();
